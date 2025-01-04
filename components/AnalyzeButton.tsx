@@ -24,16 +24,19 @@ export default function AnalyzeButton() {
           content,
           stance
         }),
+        signal: AbortSignal.timeout(300000)
       })
 
       if (!response.ok) {
-        throw new Error('分析请求失败')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || '分析请求失败')
       }
 
       const result = await response.json()
       setResult(result)
     } catch (error) {
       console.error('分析错误:', error)
+      alert(error instanceof Error ? error.message : '分析失败，请重试')
     } finally {
       setIsAnalyzing(false)
     }
