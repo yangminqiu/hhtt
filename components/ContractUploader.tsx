@@ -11,7 +11,7 @@ export default function ContractUploader() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { fileName, setFile, setContent } = useContractStore()
 
-  const preprocessContent = (content: string): string => {
+  const preprocessContent = (content: string): { processed: string; warning: string | null } => {
     // 移除多余的空白字符和特殊格式
     let processed = content
       .replace(/\r\n/g, '\n') // 统一换行符
@@ -21,17 +21,22 @@ export default function ContractUploader() {
       .replace(/\n{3,}/g, '\n\n') // 将多个连续换行减少为两个
       .trim()
 
-    // 确保内容有基本的结构
-    if (!processed.includes('合同') && !processed.includes('协议')) {
-      throw new Error('文件内容可能不是合同文本，请检查文件内容')
+    let warning = null
+
+    // 检查是否包含合同关键词
+    const contractKeywords = ['合同', '协议', '甲方', '乙方', '双方', '签订', '约定']
+    const hasContractKeyword = contractKeywords.some(keyword => processed.includes(keyword))
+
+    if (!hasContractKeyword) {
+      warning = '提示：当前文件可能不是合同文本，请确认文件内容是否正确'
     }
 
-    // 如果内容太短，可能不是完整合同
-    if (processed.length < 100) {
-      throw new Error('合同内容过短，请确保上传完整的合同文件')
+    // 检查内容长度
+    if (processed.length < 50) {
+      warning = '提示：文件内容较短，请确认是否上传了完整的合同文件'
     }
 
-    return processed
+    return { processed, warning }
   }
 
   const readFileContent = async (file: File) => {
@@ -52,7 +57,6 @@ export default function ContractUploader() {
         throw new Error('不支持的文件格式')
       }
 
-      // 预处理内容
       return preprocessContent(content)
     } catch (error) {
       console.error('文件读取错误:', error)
@@ -82,12 +86,17 @@ export default function ContractUploader() {
 
     try {
       setError(null)
-      const content = await readFileContent(file)
+      const { processed, warning } = await readFileContent(file)
       setFile(file)
-      setContent(content)
+      setContent(processed)
+      if (warning) {
+        setError(warning)
+      }
     } catch (error) {
       console.error('文件处理错误:', error)
       setError(error instanceof Error ? error.message : '文件处理过程中出现错误')
+      setFile(null)
+      setContent(null)
     }
   }
 

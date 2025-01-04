@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist, devtools } from 'zustand/middleware'
+import { devtools } from 'zustand/middleware'
 
 interface AnalysisResult {
   analysis: string
@@ -28,32 +28,17 @@ const initialState = {
 
 export const useContractStore = create<ContractState>()(
   devtools(
-    persist(
-      (set) => ({
-        ...initialState,
-        setFile: (file: File | null) => 
-          set({ fileName: file?.name || null, result: null }),
-        setContent: (content: string | null) => 
-          set({ content, result: null }),
-        setStance: (stance: 'party-a' | 'party-b' | 'neutral' | null) => 
-          set({ stance, result: null }),
-        setResult: (result: AnalysisResult | null) =>
-          set({ result }),
-        reset: () => set(initialState)
-      }),
-      {
-        name: 'contract-store',
-        storage: createJSONStorage(() => {
-          if (typeof window !== 'undefined') {
-            return sessionStorage
-          }
-          return {
-            getItem: () => null,
-            setItem: () => {},
-            removeItem: () => {}
-          }
-        })
-      }
-    )
+    (set) => ({
+      ...initialState,
+      setFile: (file: File | null) => 
+        set({ fileName: file?.name || null, result: null }),
+      setContent: (content: string | null) => 
+        set({ content, result: null }),
+      setStance: (stance: 'party-a' | 'party-b' | 'neutral' | null) => 
+        set({ stance, result: null }),
+      setResult: (result: AnalysisResult | null) =>
+        set({ result }),
+      reset: () => set(initialState)
+    })
   )
 ) 
