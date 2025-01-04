@@ -153,11 +153,15 @@ export async function analyzeContract(
           }
         ],
         temperature: 0.7,
-      })
+        stream: false,
+        max_tokens: 4000
+      }),
+      signal: AbortSignal.timeout(120000)
     })
 
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`)
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error?.message || '合同分析失败，请重试')
     }
 
     const result = await response.json()
